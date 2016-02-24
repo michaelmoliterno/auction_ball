@@ -7,7 +7,7 @@ from pymongo import MongoClient
 import cloudsql
 import sys
 
-def get_drafts(season_id,draft_type = 'Auction Draft'):
+def get_drafts(season_id,draft_type):
     with dbCursor(env) as cursor:
         cursor.execute("""
           SELECT league_id
@@ -114,68 +114,66 @@ def get_snake_league_draft_picks(draft_results):
 
     return league_picks
 
+def get_processed_unprocessed(drafts_collection,season,all_season_leagues):
+    processed_season_leagues = list(drafts_collection.find({"season_id": unicode(season)}).distinct('league_id'))
+    processed_season_leagues = [int(x) for x in processed_season_leagues]
+    unprocessed_season_leagues = list(set(all_season_leagues)-set(processed_season_leagues))
+    return processed_season_leagues, unprocessed_season_leagues
+
+def get_leagues_by_season(season, drafts_collection, type):
+
+    all_season_leagues =  get_drafts(season, type)
+
+    processed_season_leagues, unprocessed_season_leagues = \
+        get_processed_unprocessed(drafts_collection,season,all_season_leagues)
+
+    # sys.stdout.write("total :",len(all_season_leagues))
+    # sys.stdout.write("already processed:",len(processed_season_leagues))
+    # sys.stdout.write("unprocessed:",len(unprocessed_season_leagues))
+
+    return processed_season_leagues, unprocessed_season_leagues
+
 if __name__ == "__main__":
     env = 'gce'
     season = 2015
-
+    type = 'snake'
     connection = MongoClient()
     db = connection['espn_draft_picks']
 
-    auction_drafts = db['auction_drafts']
-    all_season_auctions =  get_drafts(season, 'Auction Draft')
-    processed_season_auctions = list(auction_drafts.find({"season_id": unicode(season)}).distinct('league_id'))
-    processed_season_auctions = [int(x) for x in processed_season_auctions]
-    unprocessed_season_auctions = list(set(all_season_auctions)-set(processed_season_auctions))
+    if type == 'auction':
+        drafts_collection = db['auction_drafts']
+        type = 'Auction Draft'
+        getter = get_auction_league_draft_picks
+    elif type == 'snake':
+        drafts_collection = db['snake_drafts']
+        type = 'Snake Draft'
+        getter = get_snake_league_draft_picks
 
-    snake_drafts = db['snake_drafts']
-    all_season_snakes =  get_drafts(season, 'Snake Draft')
-    processed_season_snakes = list(snake_drafts.find({"season_id": unicode(season)}).distinct('league_id'))
-    processed_season_snakes = [int(x) for x in processed_season_snakes]
-    unprocessed_season_snakes = list(set(all_season_snakes)-set(processed_season_snakes))
+    processed_season_leagues, unprocessed_season_leagues = \
+        get_leagues_by_season(season, drafts_collection, type)
 
-    print "total auctions:",len(all_season_auctions)
-    print "already processed:",len(processed_season_auctions)
-    print "unprocessed:",len(unprocessed_season_auctions)
-
-
-    print "total snakes:",len(all_season_snakes)
-    print "already processed:",len(processed_season_snakes)
-    print "unprocessed:",len(unprocessed_season_snakes)
-
-    for league in processed_season_auctions:
-        cloudsql.update_league_season(league,season,"processed",1)
-
-    for league in processed_season_snakes:
+    for league in processed_season_leagues:
         cloudsql.update_league_season(league,season,"processed",1)
 
     dir = "/home/mjfm/espn_scraper/draft_files/{}".format(season)
 
-    for draft_num,draft_recap in enumerate(os.listdir(dir)):
+    draft_files = os.listdir(dir)
 
-        if int(draft_recap) in unprocessed_season_auctions:
-            sys.stdout.write("processing auction {}".format(draft_recap))
+    for draft_num,draft_recap in enumerate(draft_files):
+        "processing draft {} of {}".format(draft_num+1, len(draft_files))
+
+        if int(draft_recap) in unprocessed_season_leagues:
+            sys.stdout.write("processing {} {}".format(type,draft_recap))
             draft_file = open('%s/%s'%(dir,draft_recap),'r')
             soup = BeautifulSoup(draft_file,"lxml")
 
-            league_picks = get_auction_league_draft_picks(soup)
+            league_picks = getter(soup)
 
             try:
-                auction_drafts.insert_many(league_picks)
+                drafts_collection.insert_many(league_picks)
                 cloudsql.update_league_season(int(draft_recap),season,"processed",1)
+
             except pymongo.errors.BulkWriteError as e:
-                sys.stderr.write("error processing {}".format(draft_recap))
-                sys.stderr.write(e.message)
 
-        elif int(draft_recap) in unprocessed_season_snakes:
-            sys.stdout.write("processing snake {}".format(draft_recap))
-            draft_file = open('%s/%s'%(dir,draft_recap),'r')
-            soup = BeautifulSoup(draft_file,"lxml")
-
-            league_picks = get_snake_league_draft_picks(soup)
-
-            try:
-                snake_drafts.insert_many(league_picks)
-                cloudsql.update_league_season(int(draft_recap),season,"processed",1)
-            except pymongo.errors.BulkWriteError as e:
                 sys.stderr.write("error processing {}".format(draft_recap))
                 sys.stderr.write(e.message)

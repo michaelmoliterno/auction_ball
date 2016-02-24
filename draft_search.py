@@ -7,41 +7,36 @@ from cloudsql import dbCursor
 
 env = 'gce'
 
-def get_leagues(cursor, public=1):
-    cursor.execute("""
-      SELECT league_id
-      FROM leagues
-      WHERE public = {}
-      """.format(public))
-    active_terms_list = [item[0] for item in cursor.fetchall()]
-    return active_terms_list
+def get_unsearched_leagues(season):
 
-def get_unknown_leagues(cursor):
-    cursor.execute("""
-      SELECT league_id
-      FROM leagues
-      WHERE public is null
-      """)
-    active_terms_list = [item[0] for item in cursor.fetchall()]
+    string = """
+    select league_id
+    from league_seasons
+    where coalesce(draft_complete,valid,draft_type,header,processed,openable) is null
+    and season_id = {}
+    """.format(season)
+
+    with dbCursor(env) as cursor:
+        cursor.execute(string)
+        active_terms_list = [item[0] for item in cursor.fetchall()]
+
     return active_terms_list
 
 
-def add_league(cursor, league_id):
+def get_leagues_with_drafts(season):
+
     string = """
-        INSERT INTO leagues (league_id,public)
-            VALUES ('{}',NULL)
-    """.format(league_id)
+    select league_id
+    from league_seasons
+    where draft_type is not null
+    and season_id = {}
+    """.format(season)
+
     with dbCursor(env) as cursor:
         cursor.execute(string)
+        active_terms_list = [item[0] for item in cursor.fetchall()]
 
-
-def add_league_season(cursor, league_id, season_id):
-    string = """
-        INSERT INTO league_seasons (active, league_id,season_id)
-            VALUES (NULL,'{}','{}')
-    """.format(league_id,season_id)
-    with dbCursor(env) as cursor:
-        cursor.execute(string)
+    return active_terms_list
 
 def get_league_season_draft(league_id,season_id):
         draft_url = "http://games.espn.go.com/flb/tools/draftrecap?leagueId={}&seasonId={}".format(league_id,season_id)
@@ -67,36 +62,53 @@ def update_league_season(league_id,season_id,field,value):
 
 if __name__ == "__main__":
 
-    for league in range(278844,300000):
-        season = 2015
+    season = 2014
+
+    leagues_with_drafts_2015 = get_leagues_with_drafts(2015)
+
+    #for league in range(1,150000):
+    for league in leagues_with_drafts_2015:
+
         n = float(random.random())/1000
         time.sleep(n)
 
-        soup, draft_url = get_league_season_draft(league,season)
+        sys.stdout.write("Processing league {}\n".format(league))
 
-        sys.stdout.write("Processing {}\n".format(draft_url))
+        try:
+            soup, draft_url = get_league_season_draft(league,season)
+        except urllib2.URLError as e:
+            update_league_season(league,season,"openable",0)
+            sys.stderr.write("error opening {}".format(league))
+            sys.stderr.write(e.message)
+            continue
+
+        update_league_season(league,season,"openable",1)
 
         try:
             header = soup.find("div", {"class": "games-pageheader"}).h1.text
         except AttributeError as e:
             header = "ERROR_FINDING_HEADER"
+            update_league_season(league,season,"header",0)
             sys.stderr.write(e.message)
             with open('/home/mjfm/espn_scraper/draft_files/{}_soup/{}_{}'.format(season,league,header), 'w') as f:
                 for line in soup.prettify('utf-8', 'minimal'):
                     f.write(str(line))
+            continue
+
+        update_league_season(league,season,"header",1)
 
         if header == "Log In":
             update_league(league,"public_{}".format(season),0)
-
-
-        elif header == "ERROR_FINDING_HEADER":
+            update_league_season(league,season,"public",0)
+            continue
+        else:
             update_league(league,"public_{}".format(season),1)
-            update_league_season(league,season,"header",0)
+            update_league_season(league,season,"public",1)
 
-        elif header == "We're Sorry":
-            update_league(league,"public_{}".format(season),1)
+        if header == "We're Sorry":
 
             error = soup.find("div", {"class": "games-alert-mod alert-mod2 games-error-red-alert"}).text
+
             if error:
 
                 if error == 'League Draft Not Complete.':
@@ -104,8 +116,9 @@ if __name__ == "__main__":
 
                 elif error == 'Invalid league specified.':
                     update_league_season(league,season,"valid",0)
+
         else:
-            update_league(league,"public_{}".format(season),1)
+
             update_league_season(league,season,"valid",1)
             update_league_season(league,season,"draft_complete",1)
 
