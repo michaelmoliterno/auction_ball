@@ -4,6 +4,7 @@ import sys
 import random
 import time
 from cloudsql import dbCursor
+import cloudsql
 
 env = 'gce'
 
@@ -38,6 +39,23 @@ def get_leagues_with_drafts(season):
 
     return active_terms_list
 
+
+def get_leagues_with_incomplete_drafts(season):
+
+    string = """
+    select league_id
+    from league_seasons
+    where draft_complete = 0
+    and season_id = {}
+    """.format(season)
+
+    with dbCursor(env) as cursor:
+        cursor.execute(string)
+        active_terms_list = [item[0] for item in cursor.fetchall()]
+
+    return active_terms_list
+
+
 def get_league_season_draft(league_id,season_id):
         draft_url = "http://games.espn.go.com/flb/tools/draftrecap?leagueId={}&seasonId={}".format(league_id,season_id)
         page = urllib2.urlopen(draft_url)
@@ -60,14 +78,17 @@ def update_league_season(league_id,season_id,field,value):
     with dbCursor(env) as cursor:
         cursor.execute(string)
 
+
+
 if __name__ == "__main__":
 
-    season = 2014
+    season = 2012
 
     leagues_with_drafts_2015 = get_leagues_with_drafts(2015)
+    leagues_without_drafts_2015 = get_leagues_with_incomplete_drafts(2015)
 
     #for league in range(1,150000):
-    for league in leagues_with_drafts_2015:
+    for league in leagues_without_drafts_2015:
 
         n = float(random.random())/1000
         time.sleep(n)
@@ -118,7 +139,6 @@ if __name__ == "__main__":
                     update_league_season(league,season,"valid",0)
 
         else:
-
             update_league_season(league,season,"valid",1)
             update_league_season(league,season,"draft_complete",1)
 

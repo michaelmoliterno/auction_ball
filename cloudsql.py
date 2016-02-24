@@ -39,6 +39,19 @@ class dbCursor(object):
                 use_unicode=True
             )
 
+def get_public_leagues(season_id):
+    string = """
+      SELECT league_id
+      FROM leagues
+      WHERE public_{} = 1
+      """.format(season_id)
+    with dbCursor('gce') as cursor:
+        cursor.execute(string)
+        active_terms_list = [item[0] for item in cursor.fetchall()]
+
+    return active_terms_list
+
+
 def update_league_season(league_id,season_id,field,value):
     string = """
         UPDATE league_seasons set {} = {}
@@ -48,15 +61,8 @@ def update_league_season(league_id,season_id,field,value):
         cursor.execute(string)
 
 
-# def get_leagues(cursor, public=1):
-#     cursor.execute("""
-#       SELECT league_id
-#       FROM leagues
-#       WHERE public = {}
-#       """.format(public))
-#     active_terms_list = [item[0] for item in cursor.fetchall()]
-#     return active_terms_list
-#
+
+
 # def get_unknown_leagues(cursor):
 #     cursor.execute("""
 #       SELECT league_id
