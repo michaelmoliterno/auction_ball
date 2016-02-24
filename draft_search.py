@@ -67,7 +67,7 @@ def update_league_season(league_id,season_id,field,value):
 
 if __name__ == "__main__":
 
-    for league in range(250000,300000):
+    for league in range(278844,300000):
         season = 2015
         n = float(random.random())/1000
         time.sleep(n)
