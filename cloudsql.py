@@ -1,7 +1,6 @@
 import MySQLdb
 import logging
 
-
 class dbCursor(object):
 
     def __init__(self, env_string=None):
@@ -61,7 +60,56 @@ def update_league_season(league_id,season_id,field,value):
         cursor.execute(string)
 
 
+def get_unsearched_leagues(season):
 
+    string = """
+    select league_id
+    from league_seasons
+    where coalesce(draft_complete,valid,draft_type,header,processed,openable,public,settings) is null
+    and season_id = {}
+    """.format(season)
+
+    with dbCursor('gce') as cursor:
+        cursor.execute(string)
+        active_terms_list = [item[0] for item in cursor.fetchall()]
+
+    return active_terms_list
+
+
+def get_public_leagues(season):
+    string = """
+    select league_id from leagues where public_{} = 1
+    """.format(season)
+
+    with dbCursor('gce') as cursor:
+        cursor.execute(string)
+        active_terms_list = [item[0] for item in cursor.fetchall()]
+
+    return active_terms_list
+
+def get_leagues_with_drafts_no_settings(season):
+
+    string = """
+    select league_id
+    from league_seasons
+    where draft_type is not null
+    and season_id = {} and (settings = 0 or settings is null)
+    """.format(season)
+
+    with dbCursor('gce') as cursor:
+        cursor.execute(string)
+        active_terms_list = [item[0] for item in cursor.fetchall()]
+
+    return active_terms_list
+
+
+def update_league_season(league_id,season_id,field,value):
+    string = """
+        UPDATE league_seasons set {} = {}
+        WHERE league_id = {} and season_id = {}
+    """.format(field,value,league_id,season_id)
+    with dbCursor('gce') as cursor:
+        cursor.execute(string)
 
 # def get_unknown_leagues(cursor):
 #     cursor.execute("""

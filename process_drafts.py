@@ -7,6 +7,10 @@ from pymongo import MongoClient
 import cloudsql
 import sys
 
+env = 'gce'
+season = 2014
+type = 'snake'
+
 def get_drafts(season_id,draft_type):
     with dbCursor(env) as cursor:
         cursor.execute("""
@@ -127,16 +131,12 @@ def get_leagues_by_season(season, drafts_collection, type):
     processed_season_leagues, unprocessed_season_leagues = \
         get_processed_unprocessed(drafts_collection,season,all_season_leagues)
 
-    # sys.stdout.write("total :",len(all_season_leagues))
-    # sys.stdout.write("already processed:",len(processed_season_leagues))
-    # sys.stdout.write("unprocessed:",len(unprocessed_season_leagues))
-
     return processed_season_leagues, unprocessed_season_leagues
 
 if __name__ == "__main__":
-    env = 'gce'
-    season = 2015
-    type = 'snake'
+
+    sys.stdout.write("processing {} for {}".format(type,season))
+
     connection = MongoClient()
     db = connection['espn_draft_picks']
 
@@ -157,23 +157,25 @@ if __name__ == "__main__":
 
     dir = "/home/mjfm/espn_scraper/draft_files/{}".format(season)
 
-    draft_files = os.listdir(dir)
+    #draft_files = os.listdir(dir)
 
-    for draft_num,draft_recap in enumerate(draft_files):
-        "processing draft {} of {}".format(draft_num+1, len(draft_files))
+    #for draft_num,draft_recap in enumerate(draft_files):
+    for draft_num, draft_recap in enumerate(unprocessed_season_leagues):
 
-        if int(draft_recap) in unprocessed_season_leagues:
-            sys.stdout.write("processing {} {}".format(type,draft_recap))
-            draft_file = open('%s/%s'%(dir,draft_recap),'r')
-            soup = BeautifulSoup(draft_file,"lxml")
+        "processing draft {} of {}".format(draft_num+1, len(unprocessed_season_leagues))
 
-            league_picks = getter(soup)
+        #if int(draft_recap) in unprocessed_season_leagues:
 
-            try:
-                drafts_collection.insert_many(league_picks)
-                cloudsql.update_league_season(int(draft_recap),season,"processed",1)
+        sys.stdout.write("processing {} {}".format(type,draft_recap))
+        draft_file = open('%s/%s'%(dir,draft_recap),'r')
+        soup = BeautifulSoup(draft_file,"lxml")
+        league_picks = getter(soup)
 
-            except pymongo.errors.BulkWriteError as e:
+        try:
+            drafts_collection.insert_many(league_picks)
+            cloudsql.update_league_season(int(draft_recap),season,"processed",1)
 
-                sys.stderr.write("error processing {}".format(draft_recap))
-                sys.stderr.write(e.message)
+        except pymongo.errors.BulkWriteError as e:
+
+            sys.stderr.write("error processing {}".format(draft_recap))
+            sys.stderr.write(e.message)
