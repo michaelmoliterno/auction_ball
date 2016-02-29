@@ -33,13 +33,11 @@ season = 2014
 #         soup = BeautifulSoup(page,"lxml")
 #         return soup, draft_url
 
-
 def get_league_season_settings(league_id,season_id):
         draft_url = "http://games.espn.go.com/flb/leaguesetup/settings?leagueId={}&seasonId={}".format(league_id,season_id)
         page = urllib2.urlopen(draft_url)
         soup = BeautifulSoup(page,"lxml")
         return soup, draft_url
-
 
 # def get_league_season_standings(league_id,season_id):
 #         draft_url = "http://games.espn.go.com/flb/standings?leagueId={}&seasonId={}".format(league_id,season_id)
