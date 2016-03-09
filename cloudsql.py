@@ -111,6 +111,8 @@ def update_league_season(league_id,season_id,field,value):
     with dbCursor('gce') as cursor:
         cursor.execute(string)
 
+
+
 # def get_unknown_leagues(cursor):
 #     cursor.execute("""
 #       SELECT league_id
@@ -137,3 +139,20 @@ def update_league_season(league_id,season_id,field,value):
 #     """.format(league_id,season_id)
 #     with dbCursor(env) as cursor:
 #         cursor.execute(string)
+
+
+
+def league_seasons_draft_summary():
+
+    string = """
+        select draft_type,season_id,count(id)
+        from league_seasons
+        where draft_type is not null
+        group by season_id, draft_type
+    """
+
+    with dbCursor('gce') as cursor:
+        cursor.execute(string)
+        listy = cursor.fetchall()
+
+    return listy

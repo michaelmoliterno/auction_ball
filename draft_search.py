@@ -9,7 +9,7 @@ import httplib
 import socket
 
 env = 'gce'
-season = 2011
+season = 2016
 slice = 0
 public_season = 2015
 
