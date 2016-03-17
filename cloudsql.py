@@ -76,6 +76,23 @@ def get_unsearched_leagues(season):
     return active_terms_list
 
 
+def get_unfound_leagues(season):
+
+    string = """
+    select league_id
+    from league_seasons
+    where draft_type is null
+    and public <> 0
+    and season_id = {}
+    """.format(season)
+
+    with dbCursor('gce') as cursor:
+        cursor.execute(string)
+        active_terms_list = [item[0] for item in cursor.fetchall()]
+
+    return active_terms_list
+
+
 def get_public_leagues(season):
     string = """
     select league_id from leagues where public_{} = 1

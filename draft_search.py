@@ -70,7 +70,7 @@ def update_league_season(league_id,season_id,field,value):
 
 if __name__ == "__main__":
 
-    unsearched_leagues = cloudsql.get_unsearched_leagues(season)
+    unsearched_leagues = cloudsql.get_unfound_leagues(season)
     sys.stdout.write("{} unsearched leagues in season {}\n".format(len(unsearched_leagues),season))
 
     # public_leagues = cloudsql.get_public_leagues(public_season)

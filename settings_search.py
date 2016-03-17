@@ -9,7 +9,7 @@ from pymongo import MongoClient
 import cloudsql
 
 env = 'gce'
-season = 2014
+season = 2016
 
 # def get_unsearched_leagues(season):
 #
@@ -60,10 +60,6 @@ def get_league_season_settings(league_id,season_id):
 #     """.format(field,value,league_id)
 #     with dbCursor(env) as cursor:
 #         cursor.execute(string)
-
-
-
-
 
 def get_league_settings(soup):
 
@@ -167,6 +163,3 @@ if __name__ == "__main__":
             continue
 
         cloudsql.update_league_season(league,season,"settings",1)
-
-
-

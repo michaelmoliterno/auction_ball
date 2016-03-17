@@ -8,8 +8,8 @@ import cloudsql
 import sys
 
 env = 'gce'
-season = 2014
-type = 'snake'
+season = 2016
+type = 'auction'
 
 def get_drafts(season_id,draft_type):
     with dbCursor(env) as cursor:

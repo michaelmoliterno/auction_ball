@@ -31,44 +31,44 @@ file_2014 = '2014_10_team'
 file_2015 = '2015_10_team'
 file_2016 = '2016_10_12.txt'
 
-# #2016
-year = 2016
-with open("{}/{}".format(TEXT_DIR,file_2016)) as f:
-    for line in f:
-
-        player_dict = {}
-        splits =  line.split("\t")
-
-        rank_name = splits[0]
-        rank_name_split = rank_name.split(' ',1)
-
-
-        rank = int(rank_name_split[0].replace(".",""))
-        name = rank_name_split[1]
-
-
-        team = splits[1]
-        pos_rank = splits[2]
-
-
-        price_10 = splits[3]
-
-        if price_10 == '--':
-            price_10 = 0
-        else:
-            price_10 = int(price_10.replace("$",""))
-
-        #price_12 = splits[4]
-
-        player_dict["rank"] = rank
-        player_dict["name"] = name
-        player_dict["team"] = team
-        player_dict["price"] = price_10
-        player_dict["year"] = year
-        player_dict["pos_rank"] = pos_rank
-        player_dict["key"] = "{}-{}".format(year,rank)
-        print player_dict
-        espn_prices.insert_one(player_dict)
+# # #2016
+# year = 2016
+# with open("{}/{}".format(TEXT_DIR,file_2016)) as f:
+#     for line in f:
+#
+#         player_dict = {}
+#         splits =  line.split("\t")
+#
+#         rank_name = splits[0]
+#         rank_name_split = rank_name.split(' ',1)
+#
+#
+#         rank = int(rank_name_split[0].replace(".",""))
+#         name = rank_name_split[1]
+#
+#
+#         team = splits[1]
+#         pos_rank = splits[2]
+#
+#
+#         price_10 = splits[3]
+#
+#         if price_10 == '--':
+#             price_10 = 0
+#         else:
+#             price_10 = int(price_10.replace("$",""))
+#
+#         #price_12 = splits[4]
+#
+#         player_dict["rank"] = rank
+#         player_dict["name"] = name
+#         player_dict["team"] = team
+#         player_dict["price"] = price_10
+#         player_dict["year"] = year
+#         player_dict["pos_rank"] = pos_rank
+#         player_dict["key"] = "{}-{}".format(year,rank)
+#         print player_dict
+#         espn_prices.insert_one(player_dict)
 
 # #2015
 # with open("{}/{}".format(TEXT_DIR,file_2015)) as f:
