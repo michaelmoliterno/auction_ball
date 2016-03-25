@@ -3,6 +3,8 @@ import cloudsql
 import plotly.plotly as py
 import plotly.graph_objs as go
 
+from dateutil.parser import parse
+
 import pymongo
 from pymongo import MongoClient
 import pandas as pd
@@ -12,9 +14,14 @@ connection = MongoClient()
 db = connection['espn_draft_picks']
 league_settings = db['league_settings']
 
+auction_drafts = db['auction_drafts']
+snake_drafts = db['snake_drafts']
+
 if __name__ == "__main__":
 
-    leagues_df = pd.DataFrame(list(league_settings.find({"Format":"League Manager"})))
+    leagues_df = pd.DataFrame(list(league_settings.find({"Format":"League Manager",
+                                                        "Scoring Type":"Head to Head Each Category"})))
+    #leagues_df = pd.DataFrame(list(league_settings.find()))
 
     cols = ['Auction Budget',
             'Current Roster Size',
@@ -56,22 +63,82 @@ if __name__ == "__main__":
 
     leagues_df.columns = cols
 
+    # Location_type_dict = leagues_df['Location'].value_counts()
+    # print Location_type_dict.head(25)
+    #
+    #
+    # LeagueName_type_dict = leagues_df['LeagueName'].value_counts()
+    # print LeagueName_type_dict.head(25)
 
 
-    #
-    # ratio = lambda x: x.value_counts(normalize=True)
-    #
-    # #output_lambda
-    #
-    # draft_type_dfs = []
-    # scoring_type_dfs = []
-    #
-    for year in range(2015,2016):
-    #
+    # opening_days = {2016:parse("April 4 2016"),
+    #                 2015:parse("April 6 2015"),
+    #                 2014:parse("March 31 2014"),
+    #                 2013:parse("April 1 2013")}
+    data = []
+    for year in range(2011,2017):
+
         season = leagues_df[leagues_df.season == "{}".format(year)]
-        #output_lambda = season.apply(lambda x: [x.value_counts().to_dict()]).apply(lambda x: x[0]).to_dict()
+        print year
+        print season['DraftType'].value_counts()
 
-        print season['DraftDate']
+
+
+
+
+
+
+        #     #opening day stuff
+        # #
+        #     season = leagues_df[leagues_df.season == "{}".format(year)]
+        #
+        #     dates = season['DraftDate'].str.split(',').str.get(1).dropna()
+        #
+        #     draft_dates = dates.astype(str) + ", {}".format(year)
+        #
+        #     date_counts = pd.to_datetime(draft_dates)#.value_counts().sort_index()
+        #
+        #     time_delta_counts = date_counts - opening_days[year]
+        #
+        #     date_diff_counts = (time_delta_counts/ np.timedelta64(1, 'D')).astype(int)
+        #
+        #     #print date_counts.index - opening_days[year]
+        #
+        #     date_diff_counts = date_diff_counts[date_diff_counts >= -28]
+        #     date_diff_counts = date_diff_counts[date_diff_counts <= 14]
+        #
+        #     date_diff_counts_now = date_diff_counts[date_diff_counts <= -13]
+        #
+        #     # print year
+        #     # print date_diff_counts.size
+        #     # print date_diff_counts_now.size
+        #     #
+        #     # print date_diff_counts_now.size/float(date_diff_counts.size)
+        #
+        #     # date_diff_props = date_diff_counts.value_counts().sort_index()/date_diff_counts.size
+        #     #
+        #     # if year == 2016:
+        #     #     date_diff_props = date_diff_props/4
+        #     #
+        #     # trace = go.Scatter(
+        #     #     x = date_diff_props.index,
+        #     #     y = date_diff_props.round(3),
+        #     #     mode = 'lines',
+        #     #     name = year
+        #     # )
+        #     #
+        #     # data.append(trace)
+        #
+        #
+        # py.plot(data, filename='draft_dates_by_year')
+
+
+        # trace = go.Scatter(x=date_counts.index.tz_localize('utc'), y=date_counts)
+        # data = [trace]
+        #
+        # url = py.plot(data, filename='2016_drafts')
+
+
 
         # draft_type_dict = season['DraftType'].value_counts().to_dict()
         #
@@ -84,6 +151,16 @@ if __name__ == "__main__":
         # scoring_type_df =  pd.DataFrame(scoring_type_dict.items())
         # scoring_type_df['year'] = year
         # scoring_type_dfs.append(scoring_type_df)
+
+        # stats_type_dict = season['stats'].value_counts()
+        # print stats_type_dict.head(25)
+
+
+        #print season.apply(lambda x: season['stats'].value_counts()).T.stack()
+
+
+
+
     #
     # pd.concat(draft_type_dfs, ignore_index=True).to_csv('draft_type_dfs.csv')
     #

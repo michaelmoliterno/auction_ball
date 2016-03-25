@@ -33,7 +33,7 @@ draft_types = {
 years = ["2011","2012","2013","2014","2015","2016"]
 num_teams = [
             #"10",
-            "12"
+            #"12"
             ]
 
 formats = {
@@ -49,7 +49,6 @@ def create_player_universe():
             { '$out' : 'player_universe' }]
 
     snake_drafts.aggregate(pipeline=pipe)
-
 
 if __name__ == "__main__":
 

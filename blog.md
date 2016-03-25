@@ -58,10 +58,17 @@ a sequence that "snakes" such that the player with the first pick in round N get
     <script data-plotly="mmoliterno:561"  src="https://plot.ly/embed.js" async></script>
 </div>
 
+## Differences in aggregate roster values
+
+## Differences in players
+FOMO
+
+Players are clearly drafting differently between the different styles.  There
+are probably a variety of reasons for this, but one
 
 
 #TODO
-your league's cattegoiries matter -- a lot
+your league's categoiries matter -- a lot
 value in different areas of the draft
 draft differences
 positional distribution differences
@@ -87,3 +94,11 @@ be a good commish:
 - good keeper Settings
 -educate on player prices and things like roster settings, cattys, format, and number of teams that affect good choices
 -espn and others have huge anchoring
+
+
+TODO
+title and teaser
+html for plotlys as comments
+thumbnail: 300 x 125
+keywords
+final edits
